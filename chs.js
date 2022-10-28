@@ -178,7 +178,7 @@ var cnPrefix = {
     "Single-Tab Mode: ": "单标签模式：",
     "Time Played: ": "已玩时长：",
     "Shift-Click to Toggle Tooltips: ": "Shift-单击以切换工具提示：",
-    "spooky dungeon ": "",
+    "spooky dungeon ": "诡异地牢 ",
     "": "",
     "": "",
     "": "",
