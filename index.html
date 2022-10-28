@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8" />
+  <title>Dungeons of Derp</title>
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+  <meta content="utf-8" http-equiv="encoding">
+  <link href="styles/main.css" rel="stylesheet" type="text/css">
+  <link href="libs/cssshake.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+  <script src="chs.js"></script>
+  <script src="core.js"></script>
+  <script id="item-slot-template" type="text/template">
+    <% if (model) { %>
+      <img draggable="false" src="assets/<%= spaceToUnderscore(model.name) %>.png" />
+      <div class="newflag">New!</div>
+      <div class="corner corner-level"><% if (model.canLevel()) print('↑') %><%= model.level %></div>
+      <div class="xpbar" style="width: <%= 63 * model.pctLeveled() %>px;"></div>
+      <div class="overlay"></div>
+    <% } else { %>
+      <% if (slot !== undefined) { %>
+        <% if (typeof(slot) === 'number') { %>
+          <div class="slot-background" draggable="false"><%= slot + 1 %></div>
+        <% } else { %>
+          <img class="slot-background" draggable="false" src="assets/<%= slot %>_slot.png" />
+        <% } %>
+      <% } %>
+      <div class="overlay"></div>
+    <% } %>
+  </script>
+
+  <script id="draggable-template" type="text/template">
+    <img draggable="false" src="assets/<%= spaceToUnderscore(name) %>.png" />
+    <div class="corner corner-level"><%= level %></div>
+    <div class="xpbar" style="width: <%= 63 * pctLeveled() %>px;"></div>
+  </script>
+
+  <script id="item-tab-template" type="text/template">
+    <div class="holder">
+      <div class="container equipped">
+        <div class="header">Equipped Gear</div>
+      </div>
+
+      <div class="container skillchain">
+        <div class="header">Equipped Skills</div>
+      </div>
+
+      <div class="container unequipped">
+        <div class="filters"></div>
+      </div>
+    </div>
+  </script>
+
+  <script id="card-tab-template" type="text/template">
+    <div class="holder">
+      <div class="container equipped">
+        <div class="header">Equipped Gear</div>
+      </div>
+
+      <div class="container skillchain">
+        <div class="header">Equipped Skills</div>
+      </div>
+
+      <div class="container equipped-cards">
+        <div class="header"></div>
+      </div>
+
+      <div class="container unequipped">
+        <div class="header"></div>
+      </div>
+    </div>
+  </script>
+
+  <script id="focused-tab-template" type="text/template">
+    <div class="holder">
+      <div class="container focused-area"></div>
+      <div class="container inventory">
+        <div class="filters"></div>
+      </div>
+    </div>
+  </script>
+
+  <script id="craft-tab-focus-area-template" type="text/template">
+    <% if (typeof(model) !== 'undefined') { %>
+    <div class="header">
+      Upgrading <%= firstCap(model.name) %>
+    </div>
+    <div class="itemSlot">
+      <img draggable="false" src="assets/<%= spaceToUnderscore(model.name) %>.png" />
+      <div class="corner corner-level"><%= model.level %></div>
+      <div class="overlay"></div>
+    </div>
+    <table class="cost">
+      <% _.each(model.getLevelCost(), function(cost, matName) { %>
+        <tr <% if(cost > matInv[matName]) { %>style="color:red;"<% } %>>
+          <td><%= ref.materials[matName].printed %></td>
+          <td><%= prettifyNum(matInv[matName]) %></td>
+          <td>/</td>
+          <td><%= prettifyNum(cost) %></td>
+        </tr>
+      <% }); %>
+    </table>
+    <input type="button" class="upgrade" value="Upgrade"
+           <% if (!matInv.canLevelCard(model)) { %> disabled="disabled" <% } %> />
+    <div class="cur-mods">
+      <div class="mod-header">Current (<%= model.level %>)</div>
+      <% _.each(prettifyMods(model.mods, model.level), function(modstr) { %>
+      <div class="mod"><%= modstr %></div>
+      <% }); %>
+    </div>
+    <div class="next-mods">
+      <div class="mod-header">Next (<%= model.level + 1 %>)</div>
+      <% _.each(prettifyMods(model.mods, model.level + 1), function(modstr) { %>
+      <div class="mod"><%= modstr %></div>
+      <% }); %>
+    </div>
+
+    <% } else { %>
+
+    <div class="header">
+        Select a card to upgrade
+    </div>
+    <div class="itemSlot"></div>
+    <div class="cost">
+      Cost is empty
+    </div>
+    <% } %>
+  </script>
+
+  <script id="recycle-tab-focus-area-template" type="text/template">
+    <% if (typeof(model) !== 'undefined') { %>
+    <div class="header">
+      <%= firstCap(model.name) %>
+    </div>
+    <div class="itemSlot">
+      <img draggable="false" src="assets/<%= spaceToUnderscore(model.name) %>.png" />
+      <div class="corner corner-level"><%= model.level %></div>
+      <div class="overlay"></div>
+    </div>
+    <input type="button" class="recycle-restore-button" value="Restore" />
+    <input type="button" class="recycle-this-button" value="Recycle" />
+    <input type="button" class="recycle-all-button" value="Recycle All" />
+    <div class="info">
+      <div>
+        Recycle this to get <% var drop = recycleManager.getRecycleValue(model.slot);
+                                         print(prettifyNum(drop.quantity) + ' ' + drop.nameStr); %>
+      </div>
+      <div>
+        Recycle everything and get <%= recycleManager.getAllValueStr() %>
+      </div>
+    </div>
+    <% } else { %>
+
+    <div class="header">
+      Select an item
+    </div>
+    <div class="itemSlot"></div>
+    <input type="button" class="recycle-restore-button" value="Restore" disabled="disabled" />
+    <input type="button" class="recycle-this-button" value="Recycle" disabled="disabled" />
+    <input type="button" class="recycle-all-button" value="Recycle All" />
+    <div class="info">
+      <div>
+        Recycle everything and get <%= recycleManager.getAllValueStr() %>
+      </div>
+    </div>
+    <% } %>
+  </script>
+
+  <script id="focused-tab-item-slot-template" type="text/template">
+    <img draggable="false" src="assets/<%= spaceToUnderscore(model.name) %>.png" />
+    <div class="corner corner-level"><% if (model.canLevel()) print('↑') %><%= model.level %></div>
+    <div class="overlay"></div>
+  </script>
+
+  <script id="item-drop-area-template" type="text/template">
+    <div class="craft-drop">Craft Card Upgrade</div>
+    <div class="recycle-drop">Send <br>To Recycle</div>
+  </script>
+
+  <script id="info-box-template" type="text/template">
+    <% if (model) { %>
+      <% if (model.itemType !== 'card') { %>
+        <div class="titlebox"><%= firstCap(model.name) %></div>
+        <% if (model.itemType === "armor") { %>
+          <div class="infoitem"><%= firstCap(model.slot) %> Armor</div>
+        <% } else if (model.itemType === "weapon") { %>
+          <div class="infoitem"><%= firstCap(model.weaponType) %> Weapon</div>
+        <% } else if (model.itemType === "skill") { %>
+          <div class="infoitem"><%= firstCap(model.skillType) %> Skill</div>
+        <% } %>
+        <div class="infoitem">Level <%= model.level %></div>
+        <div class="infoitem">XP <%= prettifyNum(model.xp) %> / <%= prettifyNum(model.getNextLevelXp()) %></div>
+        <div class="xpbox"><div class="xpearned" style="width: <%= (model.xp / model.getNextLevelXp()) * 100 %>px"></div></div>
+        <% if (model.disabled) { %>
+        <div class="infoitem disabled">Skill Cannot Be Used Because Wrong Weapon Type Equipped</div>
+        <% } %>
+        <div class="mods">
+        <% _.each(prettifyMods(model.baseMods, model.level), function(modstr) { %>
+          <div class="mod"><%= modstr %></div>
+        <% }); %>
+        <div class="infoitem">Next Level: </div>
+        <% _.each(prettifyPerLvlMods(model.baseMods), function(modstr) {%>
+        <div class="perLvlMod"><%= modstr %></div>
+        <% }); %>
+        </div>
+      <% } else { %>
+        <div class="titlebox"><%= firstCap(model.name) %></div>
+        <div class="infoitem"><%= firstCap(model.slot) %> Card</div>
+        <div class="infoitem">Level <%= model.level %></div>
+        <% if (model.canLevel()) { %>
+        <div class="infoitem" style="color:rgba(244, 184, 38, 1);">Next Level Craftable!</div>
+        <% } %>
+        <div class="mods">
+        <% _.each(prettifyMods(model.mods, model.level), function(modstr) { %>
+          <div class="mod"><%= modstr %></div>
+        <% }); %>
+        <div class="infoitem">Next Level: </div>
+        <% _.each(prettifyPerLvlMods(model.mods, model.level), function(modstr) {%>
+          <div class="perLvlMod"><%= modstr %></div>
+        <% }); %>
+        </div>
+      <% } %>
+      <% if (model.flavor) { %>
+        <div class="infoitem flavor"><%= model.flavor %></div>
+      <% } %>
+      <% if (model.itemType === 'skill' && model.equipped) { %>
+        <div class="infoitem skilldmg">Total Damage: <%= prettifyNum(model.getTotalDmg()) %></div>
+        <div class="infoitem skilldmg">DPS: <%= prettifyNum(model.getDps()) %></div>
+        <div class="infoitem skilldmg">Range: <%= model.range %></div>
+        <div class="infoitem skilldmg">Duration: <%= prettifyNum(model.speed) %> ms</div>
+        <div class="infoitem skilldmg">Cooldown: <%= prettifyNum(model.cooldownTime) %> ms</div>
+        <div class="infoitem skilldmg">Mana Cost: <%= Math.floor(model.manaCost*100) / 100 %></div>        
+      <% } %>
+    <% } %>
+  </script>
+
+  <script id="card-inventory-info-box-template" type="text/template">
+    <h3><%= model.name %></h3>
+    <div class="mods">
+      <div>Level <%= model.level %></div>
+      <% _.each(model.mods, function(mod) { %>
+        <div><%= mod.def %></div>
+      <% }); %>
+    </div>
+  </script>
+
+  <script id="kv-table-template" type="text/template">
+    <table>
+    <% _.each(data, function(value, key) { %>
+        <tr><th><%= firstCap(key) %></th></tr>
+        <% _.each(value, function(val) { %>
+            <tr><td><%= val[0] %></td><td><%= val[1] %></td></tr>
+        <% }); %>
+    <% }); %>
+    </table><table>    
+    <% _.each(skilldata, function(value, key) { %>
+        <tr><th><%= firstCap(key) %></th></tr>
+        <% _.each(value, function(val) { %>
+            <tr><td><%= val[0] %></td><td><%= val[1] %></td></tr>
+        <% }); %>
+    <% }); %>        
+    </table><table>
+    <% _.each(matdata, function(value, key) { %>
+        <tr><th><%= firstCap(key) %></th></tr>
+        <% _.each(value, function(val) { %>
+            <tr><td><%= val[0] %></td><td><%= val[1] %></td></tr>
+        <% }); %>
+    <% }); %>
+    </table>
+  </script>
+
+  <script id="stat-bar-template" type="text/template">
+    <div class="bar"></div>
+    <div class="text"></div>
+  </script>
+
+  <script id="skill-footer-template" type="text/template">
+    <div class="box">
+      <img src="assets/<%= spaceToUnderscore(model.spec.name) %>.png" />
+      <div class="cooldown"></div>
+      <div class="indicator range-indicator">R</div>
+      <div class="indicator mana-indicator">M</div>
+    </div>
+    <div class="use-holder"><div class="use-bar"></div></div>
+  </script>
+
+  <script id="potion-template" type="text/template">
+    <div class="potion">
+      <div class="box">
+        <img src="assets/health_potion.png" />
+        <div class="cooldown"></div>
+      </div>
+      <div class="use-holder"><div class="use-bar"></div></div>
+    </div>
+  </script>
+
+  <script id="speed-control-template" type="text/template">
+    <div class="timer"></div>
+    <div class="play-pause">
+      <img class="pause" src="assets/pause_button.png" />
+      <img class="play" src="assets/play_button.png" />
+    </div>
+    <div class="speed"></div>
+    <div class="up"><img src="assets/play_button.png" /></div>
+    <div class="down"><img src="assets/play_button.png" /></div>
+  </script>
+
+  <script id="left-buttons-template" type="text/template">
+    <div class="button config-button noselect">Conf</div>
+    <div class="button stats-button noselect">Stat</div>
+    <div class="button help-button noselect">Help</div>
+    <div class="button map-button noselect">Map</div>
+    <div class="button account-button noselect">Acc</div>    
+  </script>
+
+  <script id="right-buttons-template" type="text/template">
+    <div class="button recycle-button noselect">Rcyl</div>
+    <div class="button craft-button noselect">Crft</div>      
+    <div class="button inv-button noselect"><span id="inv-newflag" class="newflag">New</span>Inv</div>
+    <div class="button cards-button noselect"><span id="card-newflag" class="newflag">New</span>Crds</div>
+    <div class="button build-button noselect">Bld</div>      
+  </script>
+
+  <script id="zone-map-tab-template" type="text/template">
+    <img />
+    Zone Name: <%= name %><br/>
+    Level: <%= level %>
+  </script>
+  
+  <script id="map-tab-template" type="text/template">
+    <div class="holder">
+    </div>
+  </script>
+
+  <script id="inv-menu-item-template" type="text/template">
+    <div class="item-header">
+      <%= name %> - level <span class="level"></span>
+    </div>
+    <div class="item-body">
+      <div class="item-mid">
+        <img src="assets/<%= spaceToUnderscore(name) %>.png" height="90" width="90">
+        <div class="item-mid-text">
+          Type: <%= itemType %><br/><%= midExtra %> 
+        </div>
+      </div>
+      <div class="item-affixes">
+      </div>
+      <div class="item-buttonbox">
+        <%= buttons %>
+      </div>
+    </div>
+  </script>
+
+  <script id="inv-menu-item-xp" type="text/template">
+    <span class="xp">0</span> / <span class="nextLevelXp">?</span> XP
+  </script>
+
+  <script id="inv-menu-item-buttons-template" type="text/template">
+    <input class="item-button level-up" value="Level Up" type="button" disabled/>
+    <input class="item-button equip" value="Equip" type="button" />
+  </script>
+
+  <script id="craft-menu-item-buttons-template" type="text/template">
+    <input class="item-button craft" value="Craft" type="button" disabled />
+    <input class="item-button scrap" value="Scrap" type="button" />
+  </script>
+
+  <script id="inv-menu-template" type="text/template">
+    <div class="inv-content">
+      <% _.each(groups, function(group) { %>
+      <div class="item-group <%= group %>">
+        <div class="item-group-header">
+          <% print(group[0].toUpperCase() + group.slice(1)) %>
+        </div>
+        <div class="item-group-content">
+        </div>
+      </div>
+      <% }); %>
+    </div>
+  </script>
+
+  <script id="craft-menu-template" type="text/template">
+    <div class="craft-content">
+      <% _.each(groups, function(group) { %>
+      <div class="item-group <%= group %>">
+        <div class="item-group-header">
+          <% print(group[0].toUpperCase() + group.slice(1)) %>
+        </div>
+        <div class="item-group-content">
+        </div>
+      </div>
+      <% }); %>
+    </div>
+  </script>
+
+  <script id="lvlup-tab-template" type="text/template">
+    <div class="lvlupcontent">
+      <div class="lvlupitemholder">
+        <div class="lvlupitemimg">
+          <img src="http://img1.wikia.nocookie.net/__cb20080817200550/diablo/images/4/4f/D2-u-Treadsofcthon.gif" />
+        </div>
+        <div class="lvlupitemstats">
+          Magic Shoes <br>
+          + 5 Fire Damage<br>
+          + 10 Armor<br>
+        </div>
+      </div>
+      <div class="lvluprollbox">
+        Affix on next level: <br><br>
+        + 3 Fire Damage
+      </div>
+      <input type="button" value="Reroll" />
+      <input type="button" value="Level Up" />
+    </div>
+  </script>
+
+  <script id="settings-tab-template" type="text/template">
+    <div class="settingscontent">
+      <input type="button" value="Save" />
+      <input type="button" value="Mute" />
+    </div>
+  </script>
+
+  <script id="header-stats-template" type="text/template">
+    <table>
+      <tr>
+        <td>Name</td>
+        <td id="name"><%= name %></td>
+      </tr>
+      <tr>
+        <td>Level</td>
+        <td id="level"><%= level %></td>
+      </tr>
+      <tr>
+        <td>Hp</td>
+        <td id="hp"><%= hp %> / <%= maxHp %></td>
+      </tr>
+      <tr>
+        <td>Mana</td>
+        <td id="mana"><%= mana %> / <%= maxMana %></td>
+      </tr>
+      <tr>
+        <td>Xp</td>
+        <td id="xp"><%= xp %> / <%= nextLevelXp %></td>
+      </tr>
+    </table>
+  </script>
+
+  <script id="header-zone-stats-template" type="text/template">
+    <table>
+      <tr>
+        <td>Zone</td>
+        <td id="name"><%= name %></td>
+      </tr>
+      <tr>
+        <td>Level</td>
+        <td id="level"><%= level %></td>
+      </tr>
+      <tr>
+        <td>Room</td>
+        <td id="room"><%= heroPos + 1 %> / <%= roomCount %></td>
+      </tr>
+      <tr>
+        <td>Monsters</td>
+        <td id="monsters"><%= livingCount %> / <%= totalCount %></td>
+      </tr>
+    </table>
+  </script>
+
+  <script id="header-equipped-template" type="text/template">
+    <% _.each(items, function(item, slot) { %>
+    <div class="<%= slot %>">
+      <img class="slot-background" src="assets/<%= 'empty-' + slot %>.svg" width="60" height="60" />
+      <% if (item) { %>
+      <img class="slot-img" src="assets/<%= item.get('name') %>.png" width="60" height="60" />
+      <% } else { %>
+      <img class="empty slot-img" width="60" height="60" />
+      <% } %>
+    </div>
+    <% }); %>
+  </script>
+
+  <script id="header-skillchain-template" type="text/template">
+    <% _.each([0, 1, 2, 3, 4, 5], function(i) { %>
+    <div class="skill-slot <%= i %>"></div>
+    <% }); %>
+  </script>
+
+  <script id="header-skill-template" type="text/template">
+    <div class="veil"></div>
+    <div class="img-holder">
+      <img src="assets/<%= name %>.svg" />
+    </div>
+  </script>
+
+  <script id="config-template" type="text/template">
+    <div><p>What is your name?</p>
+      <input id="charname" type="text" value="<%= hero.name %>" /><input type="button" value="OK" id="namebutton" />
+      <p>Message to the devs?</p>
+      <textarea id="devmsg" placeholder="Thanks for your feedback!" rows="2" cols="20" wrap="soft"/>
+      <input type="button" value="OK" id="devbutton" />
+      <p>Donate to development of our game!</p>
+      <p>Enter an amount in USD (min $1)</p>
+      <input type="text" value="10.00" id="donationamount" />
+      <button id="donateButton">Donate (via Stripe)</button>
+      <p style="width:90%">All donations will be rolled forward into our in-game paid currency system once implemented (donate $10, get $10 of in-game currency later based on email address used to donate)</p>
+
+      <p><input type="number" id="moveAngle" min="-180" max="180" value="0"> Movement Angle</p>
+
+      
+      <p><input type="checkbox" id="enableBuildHotkeys">Enable Save/Load builds with 0-9</p>
+      <p>When enabled, press Shift+0-9 to save build, 0-9 to load build</p>
+
+      <p><input type="checkbox" id="autoCraft">Automatically level up equipped cards</p>
+      <p><input type="checkbox" id="enableMatMsgs">Show Material Drops</p>
+      <p><input type="checkbox" id="enableHeroDmgMsgs">Show Hero Damage Taken</p>
+      <p><input type="checkbox" id="enableMonDmgMsgs">Show Monster Damage Taken</p>
+      <p><input type="checkbox" id="pauseOnDeath">Pause on Death</p>
+
+      <p><input type="checkbox" id="bossPause">Pause on Boss</p>
+      <p><input type="checkbox" id="backOnDeath">Back <input type="number" id="zonesBack" min="1" max="100" value="1"> Zone on Death</p>
+      
+      <p><input type="checkbox" id="disable-shake">Disable the shaking time bank's high speed shake effect</p>
+      <p>Note that at 10x speed you are 50% more inefficient and at 50x speed you are 100% more inefficient.</p>
+
+      <p>Wipe your game data and reset?  (no prestige bonuses - coming soon)</p>
+      <input type="button" value="WIPE SAVE AND RELOAD" id="wipebutton" />
+    </div>
+  </script>
+
+  <script id="help-template" type="text/template">
+    <div>
+      <h4>Welcome to Dungeons of Derp</h4>
+
+      <p>Version: <%= ' '+gl.VERSION_NUMBER %></p>
+      <p><a href="https://dungeonsofderp.com/leaderboard.html">Leaderboard</a></p>
+      <p><a href="https://dungeonsofderp.com/chat.html">Chat</a></p>
+      <p><a href="https://dungeonsofderp.com/compendium.html">Monster Compendium</a></p>      
+      <p>Hints:</p>
+      <p>-Click your potion to regain some health</p>
+      <p>-Click "Inv" to Change equipment and skills</p>
+      <p>-Click "Card" to equip cards</p>
+      <p>-Click "Craft" to level up cards</p>            
+      <p>-Click the Config button to change your name</p>     
+
+      <p>Please check out our <a href="https://www.reddit.com/r/DungeonsOfDerp" target="_blank">Subreddit</a> for more help</p>
+
+      <p><a href="https://www.reddit.com/r/DungeonsOfDerp/comments/2y1sgh/dungeons_of_derp_tutorial/">Text Tutorial</a></p>
+
+      <p> Special Thanks </p>
+      <p> Ebon Mourn - Art Assets </p>
+
+  </div>
+  </script>
+
+  <script id="build-template" type="text/template">
+    <div>
+      <h4>Build Tab</h4>
+      <div id="buildbuttons">
+        <% if (lastBuildLoaded !== undefined) { %>
+          <div class="buildrow" style="margin-bottom:10px; margin-left:5px;">
+            Last Build Loaded:
+            <%= '' + lastBuildLoaded %>
+          </div>
+        <% } %>
+        <% _.each(buildNames, function(name, i) { %>
+          <div class="buildrow" style="margin-bottom:10px; margin-left:5px;">
+            <span style="margin-right:10px"><%= i %></span>
+            <input id='load-build-<%= i %>' type="button" value="load" />
+            <span style="margin:10px;"><%= name %></span>
+            <input id='save-build-<%= i %>' type="button" value="save" />
+          </div>
+        <% }); %>
+        <div>
+          Rename Build
+          <br>
+          <input type="text" id="renamebuild" />
+          <input type="number" min="0" max="20" value="0" id="renamebuildnum" />
+          <input id='rename-build-button' type="button" value="Rename" />
+        </div>
+      </div>
+    </div>
+  </script>  
+
+  <script id="account-template" type="text/template">
+    <div>
+      <h4>Accounts - In Construction - Use with Caution!</h4>
+      
+      <!--p>session Id: <%= ' ' + gl.sessionId %></p>
+      <p>client Id: <%= ' ' + gl.clientId %></p-->
+      
+      <% if (gl.accountId === null || gl.accountId === undefined) { %>
+      <p>Sign In</p>
+      <input type='text' id='signInUsername' placeholder='Email'>
+      <input type='password' id='signInPassword' placeholder='Password'>
+      <input type='button' id='signInSubmit' value='Sign In'>
+
+      <p> Create Account </p>
+      <input type='text' id='newAccUsername' placeholder='Email'>
+      <input type='password' id='newAccPassword' placeholder='Password'>
+      <input type='button' id='newAccSubmit' value='Sign In'>
+      <% } else { %>
+      <p>account Id: <%= ' ' + gl.accountId %></p>
+      <p>Email: <%= gl.FB.getAuth().password.email %></p>
+      <p>Save/Load data from Server</p>
+      <input type='button' id='fbFullSave' value='Full Save Account'>
+      <input type='button' id='fbFullLoad' value='Full Load Account'>
+      <p>Warning: Loading will erase your local data! Use at your own risk!</p>
+      <p><a href="#" id='signOut'>Sign Out</a></p>
+      <% } %>
+      
+      <h4>Prestige</h4>
+      <p>Prestige now for <%= prestigeNext %> prestige points.</p>
+      <p>Last prestige was for <%= prestigeTotal %> prestige points.</p>
+      <p>Careful! Prestiging early can lose progress</p>
+      <input type='button' id='prestige' value='Prestige' />
+      <p>You have <%= remainingPrestige %> remaining points</p>
+      <p>Hold Shift to spend max points</p>
+
+      <%  _.each(statObjs, function(stat) { %>
+        <p>
+          <%= stat.pretty %> : <%= stat.points %> (costs <%= stat.cost %>)
+          <input class="spendPrestige" type="button" value="+" id="<%= stat.stat %>" />
+        </p>
+      <% }); %>
+
+    </div>
+  </script>
+  
+  <script type="text/template" id="menu-tab-template">
+    <td class="tab" id="<%- name %>"><%- name %></td>
+  </script>
+
+  <!-- Libs -->
+
+  <!-- <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-60405705-1', 'auto');
+    ga('send', 'pageview');
+  </script> -->
+
+  <!--WAT-->
+
+  <!--<script type="text/javascript" src="libs/checkout.js"></script>-->
+  <script type="text/javascript" src="libs/raf-shim.js"></script>
+  <script type="text/javascript" src="libs/sprintf.min.js"></script>
+
+  <script type="text/javascript" src="libs/patch.js"></script>
+
+  <script type="text/javascript" src="scripts/bundle.js"></script>
+  <!--ENDWAT-->
+
+  <!-- Entry point -->
+  <script>
+   (function() {
+     console.log(GLOBAL);
+     console.log(Object.keys(GLOBAL));
+     GLOBAL.onReady();
+   })();
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700" rel="stylesheet" type="text/css">
+<!--客服 开始-->
+<script src="//g8hh.com/static/js/jquery.min.js"></script>
+<link rel="stylesheet" href="//g8hh.com/static/css/kf.css" type="text/css" media="screen" charset="utf-8">
+<script src="//g8hh.com/static/js/kf.js"></script>
+<!-- 客服 结束 -->
+<!--站长统计-->
+<div style="display: none">
+    <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?dbb7ff142f4d4b68546c93b9cd6e9328";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+        </div>
+</body>
