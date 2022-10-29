@@ -674,7 +674,7 @@ var EntityBody = _model.Model.extend({
       return true;
     }
     if (this.spec.team === 0 && _globals.gl.settings.enableHeroDmgMsgs || this.spec.team === 1 && _globals.gl.settings.enableMonDmgMsgs) {
-      _globals.gl.MessageEvents.trigger('message', newZoneMessage('dodged!', 'dodge', this.pos, 'rgba(230, 230, 10, 0.2)', 1000));
+      _globals.gl.MessageEvents.trigger('message', newZoneMessage('未命中!', 'dodge', this.pos, 'rgba(230, 230, 10, 0.2)', 1000));
     }
 
     return false;
@@ -825,7 +825,7 @@ var HeroBody = exports.HeroBody = EntityBody.extend({
           var color = message.slice(0, 3) == 'New' || message.slice(0, 7) == 'Leveled' ? 'rgba(255, 140, 0, 0.8)' : 'rgba(255, 100, 0, 0.6)';
           _globals.gl.MessageEvents.trigger('message',
           // TODO: Fix the offset here
-          newZoneMessage(message, 'drop', target.pos, color, 1000, target.spec.height / 2 + index * 300));
+          newZoneMessage(message, '掉落', target.pos, color, 1000, target.spec.height / 2 + index * 300));
         }, this);
       }
     }
@@ -865,9 +865,9 @@ var HeroBody = exports.HeroBody = EntityBody.extend({
       this.potionCoolAt = _globals.gl.time + 10000; // 10 second cooldown
       var addAmount = 10 + this.spec.level * 20 * Math.pow(1.002, this.spec.level);
       this.modifyHp(addAmount);
-      _globals.gl.MessageEvents.trigger('message', newZoneMessage('potion worked!', 'potion', this.pos, 'rgba(230, 230, 230, 0.7)', 1000));
+      _globals.gl.MessageEvents.trigger('message', newZoneMessage('药水起作用了!', 'potion', this.pos, 'rgba(230, 230, 230, 0.7)', 1000));
     } else {
-      _globals.gl.MessageEvents.trigger('message', newZoneMessage('potion still cooling down!', 'potion', this.pos, 'rgba(230, 230, 230, 0.4)', 500));
+      _globals.gl.MessageEvents.trigger('message', newZoneMessage('药水还在冷却!', 'potion', this.pos, 'rgba(230, 230, 230, 0.4)', 500));
     }
   }
 });
@@ -7608,7 +7608,7 @@ var GameModel = exports.GameModel = _model.Model.extend({
       cost = availTime;
       this.gameSpeed = 1;
       _globals.gl.MessageEvents.trigger('message', {
-        text: 'No time left!',
+        text: '没时间了!',
         type: 'timeleft',
         pos: this.zone.hero.pos,
         color: 'rgba(230, 10, 10, 0.8)',
@@ -12364,7 +12364,7 @@ var ZoneManager = exports.ZoneManager = _model.Model.extend({
 
     if (!this.hero.isAlive()) {
       this.startWaiting({
-        text: 'You Died!',
+        text: '你挂掉了!',
         type: 'death'
       });
       if (_globals.gl.settings.backOnDeath === true) {
@@ -12383,7 +12383,7 @@ var ZoneManager = exports.ZoneManager = _model.Model.extend({
       _globals.gl.GameEvents.trigger('reportData');
 
       this.startWaiting({
-        text: 'Zone Cleared!',
+        text: '区域已清除!',
         type: 'clear'
       });
     }
