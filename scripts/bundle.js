@@ -471,9 +471,9 @@ var EntityBody = _model.Model.extend({
 
   teamString: function teamString() {
     if (this.isHero()) {
-      return 'Hero';
+      return '英雄';
     } else {
-      return 'Monster';
+      return '怪物';
     }
   },
 
@@ -1091,7 +1091,7 @@ CardDrop.prototype.make = function () {
 };
 
 CardDrop.prototype.message = function () {
-  return 'New Card: ' + (0, _utils.firstCap)(this.name);
+  return '新的卡牌: ' + (0, _utils.firstCap)(this.name);
 };
 
 function ItemDrop(refData) {
@@ -1112,7 +1112,7 @@ ItemDrop.prototype.make = function () {
 };
 
 ItemDrop.prototype.message = function () {
-  return 'New Item: ' + (0, _utils.firstCap)(this.name);
+  return '新物品: ' + (0, _utils.firstCap)(this.name);
 };
 
 function SkillDrop(refData) {
@@ -1127,7 +1127,7 @@ SkillDrop.prototype.make = function () {
 };
 
 SkillDrop.prototype.message = function () {
-  return 'New Skill: ' + (0, _utils.firstCap)(this.name);
+  return '新技能: ' + (0, _utils.firstCap)(this.name);
 };
 
 
