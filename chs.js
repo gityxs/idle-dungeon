@@ -750,7 +750,7 @@ var cnRegReplace = new Map([
     [/^(.+) of Wisdom Gained As Maximum Mana$/, '获得 智力 的 $1 作为法力上限'],
     [/^(.+) of Wisdom Gained As Leeched Health$/, '获得 智力 的 $1 作为生命吸取'],
     [/^(.+) of Physical Damage Converted To Poison Damage$/, '$1 物理伤害转换为毒伤害'],
-    [/^(.+) Health Regenerated per Second$/, '$1 每秒恢复的生命值'],
+    [/^\-(.+) Health Regenerated per Second$/, '$1 每秒恢复的生命值'],
     [/^(.+) Projectile Range$/, '$1 射程'],
     [/^(.+) Cooldown Length$/, '$1 冷却时长'],
     [/^(.+) More Projectile Range$/, '$1 更多的 射程'],
