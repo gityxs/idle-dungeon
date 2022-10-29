@@ -103,7 +103,7 @@
         </tr>
       <% }); %>
     </table>
-    <input type="button" class="upgrade" value="Upgrade"
+    <input type="button" class="upgrade" value="升级"
            <% if (!matInv.canLevelCard(model)) { %> disabled="disabled" <% } %> />
     <div class="cur-mods">
       <div class="mod-header">Current (<%= model.level %>)</div>
@@ -140,9 +140,9 @@
       <div class="corner corner-level"><%= model.level %></div>
       <div class="overlay"></div>
     </div>
-    <input type="button" class="recycle-restore-button" value="Restore" />
-    <input type="button" class="recycle-this-button" value="Recycle" />
-    <input type="button" class="recycle-all-button" value="Recycle All" />
+    <input type="button" class="recycle-restore-button" value="恢复" />
+    <input type="button" class="recycle-this-button" value="回收" />
+    <input type="button" class="recycle-all-button" value="全部回收" />
     <div class="info">
       <div>
         Recycle this to get <% var drop = recycleManager.getRecycleValue(model.slot);
@@ -158,9 +158,9 @@
       Select an item
     </div>
     <div class="itemSlot"></div>
-    <input type="button" class="recycle-restore-button" value="Restore" disabled="disabled" />
-    <input type="button" class="recycle-this-button" value="Recycle" disabled="disabled" />
-    <input type="button" class="recycle-all-button" value="Recycle All" />
+    <input type="button" class="recycle-restore-button" value="恢复" disabled="disabled" />
+    <input type="button" class="recycle-this-button" value="回收" disabled="disabled" />
+    <input type="button" class="recycle-all-button" value="全部回收" />
     <div class="info">
       <div>
         Recycle everything and get <%= recycleManager.getAllValueStr() %>
@@ -359,13 +359,13 @@
   </script>
 
   <script id="inv-menu-item-buttons-template" type="text/template">
-    <input class="item-button level-up" value="Level Up" type="button" disabled/>
-    <input class="item-button equip" value="Equip" type="button" />
+    <input class="item-button level-up" value="升级" type="button" disabled/>
+    <input class="item-button equip" value="装备" type="button" />
   </script>
 
   <script id="craft-menu-item-buttons-template" type="text/template">
-    <input class="item-button craft" value="Craft" type="button" disabled />
-    <input class="item-button scrap" value="Scrap" type="button" />
+    <input class="item-button craft" value="制作" type="button" disabled />
+    <input class="item-button scrap" value="报废" type="button" />
   </script>
 
   <script id="inv-menu-template" type="text/template">
@@ -412,15 +412,15 @@
         Affix on next level: <br><br>
         + 3 Fire Damage
       </div>
-      <input type="button" value="Reroll" />
-      <input type="button" value="Level Up" />
+      <input type="button" value="重抽" />
+      <input type="button" value="升级" />
     </div>
   </script>
 
   <script id="settings-tab-template" type="text/template">
     <div class="settingscontent">
-      <input type="button" value="Save" />
-      <input type="button" value="Mute" />
+      <input type="button" value="保存" />
+      <input type="button" value="静音" />
     </div>
   </script>
 
@@ -498,10 +498,10 @@
 
   <script id="config-template" type="text/template">
     <div><p>What is your name?</p>
-      <input id="charname" type="text" value="<%= hero.name %>" /><input type="button" value="OK" id="namebutton" />
+      <input id="charname" type="text" value="<%= hero.name %>" /><input type="button" value="确定" id="namebutton" />
       <p>Message to the devs?</p>
       <textarea id="devmsg" placeholder="Thanks for your feedback!" rows="2" cols="20" wrap="soft"/>
-      <input type="button" value="OK" id="devbutton" />
+      <input type="button" value="确定" id="devbutton" />
       <p>Donate to development of our game!</p>
       <p>Enter an amount in USD (min $1)</p>
       <input type="text" value="10.00" id="donationamount" />
@@ -527,7 +527,7 @@
       <p>Note that at 10x speed you are 50% more inefficient and at 50x speed you are 100% more inefficient.</p>
 
       <p>Wipe your game data and reset?  (no prestige bonuses - coming soon)</p>
-      <input type="button" value="WIPE SAVE AND RELOAD" id="wipebutton" />
+      <input type="button" value="删档并刷新" id="wipebutton" />
     </div>
   </script>
 
@@ -569,9 +569,9 @@
         <% _.each(buildNames, function(name, i) { %>
           <div class="buildrow" style="margin-bottom:10px; margin-left:5px;">
             <span style="margin-right:10px"><%= i %></span>
-            <input id='load-build-<%= i %>' type="button" value="load" />
+            <input id='load-build-<%= i %>' type="button" value="加载" />
             <span style="margin:10px;"><%= name %></span>
-            <input id='save-build-<%= i %>' type="button" value="save" />
+            <input id='save-build-<%= i %>' type="button" value="保存" />
           </div>
         <% }); %>
         <div>
@@ -669,20 +669,19 @@
   <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
   <link href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700" rel="stylesheet" type="text/css">
 <!--客服 开始-->
-<script src="//g8hh.com/static/js/jquery.min.js"></script>
-<link rel="stylesheet" href="//g8hh.com/static/css/kf.css" type="text/css" media="screen" charset="utf-8">
-<script src="//g8hh.com/static/js/kf.js"></script>
+<script src="//g8hh.github.io/static/js/jquery.min.js"></script>
+<link rel="stylesheet" href="//g8hh.github.io/static/css/kf.css" type="text/css" media="screen" charset="utf-8">
+<script src="//g8hh.github.io/static/js/kf.js"></script>
 <!-- 客服 结束 -->
 <!--站长统计-->
-<div style="display: none">
-    <script>
-    var _hmt = _hmt || [];
-    (function() {
-      var hm = document.createElement("script");
-      hm.src = "https://hm.baidu.com/hm.js?dbb7ff142f4d4b68546c93b9cd6e9328";
-      var s = document.getElementsByTagName("script")[0]; 
-      s.parentNode.insertBefore(hm, s);
-    })();
-    </script>
-        </div>
+    <div style="display: none">
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?828597e93cee632465679b7ef35edfd5";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>    </div>
 </body>
