@@ -709,6 +709,7 @@ var cnExcludePostfix = [
 var cnRegReplace = new Map([
     [/^([\d\.]+) hours ([\d\.]+) minutes ([\d\.]+) seconds$/, '$1 小时 $2 分钟 $3 秒'],
     [/^You are gaining (.+) elves per second$/, '你每秒获得 $1 精灵'],
+    [/^You have (.+) remaining points$/, '你有 $1 剩余点数'],
     [/^You have (.+) points$/, '你有 $1 点数'],
     [/^Recycle everything and get (.+) Handles.$/, '回收所有东西并获得 $1 个把手。'],
     [/^Next at (.+) points$/, '下一个在 $1 点数'],
@@ -806,7 +807,7 @@ var cnRegReplace = new Map([
     [/^Accuracy : (.+) \(costs (.+)\)$/, '精准 : $1 \(成本 $2\)'],
     [/^Armor : (.+) \(costs (.+)\)$/, '护甲 : $1 \(成本 $2\)'],
     [/^Vitality : (.+) \(costs (.+)\)$/, '活力 : $1 \(成本 $2\)'],
-    [/^Strength : (.+) \(costs (.+)\)$/, 'Strength : $1 \(成本 $2\)'],
+    [/^Strength : (.+) \(costs (.+)\)$/, '力量 : $1 \(成本 $2\)'],
     [/^\+(.+) Strength$/, '\+$1 力量'],
     [/^\+(.+) Dodge$/, '\+$1 闪避'],
     [/^\+(.+) Armor$/, '\+$1 护甲'],
